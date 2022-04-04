@@ -36,7 +36,12 @@ public:
 			printf("x of point can not be zero \n");
 		}
 	}
-
+	myLine()
+	{
+		a = 0;
+		b = 0;
+		c = 0;
+	}
 	~myLine()
 	{
 	}
@@ -179,7 +184,7 @@ int main()
 	const cv::Point wallDiagonalLineOneRight = cv::Point(463, 291);
 	const cv::Point wallDiagonalLineOneLeft = cv::Point(91, 707);
 	const cv::Point wallDiagonalLineTwoRight = cv::Point(461, 552);
-	const cv::Point wallDiagonalLineTwoLeft = cv::Point(89, 902);//使用（89，884）时看起来比较正常
+	const cv::Point wallDiagonalLineTwoLeft = cv::Point(89, 884);//使用（89，884）时看起来比较正常。取点取为（89，902）
 	//由两点确定直线
 	myLine wallDiagonalLineOne(wallDiagonalLineOneLeft, wallDiagonalLineOneRight);
 	myLine wallDiagonalLineTwo(wallDiagonalLineTwoLeft, wallDiagonalLineTwoRight);
@@ -253,9 +258,45 @@ int main()
 
 	cv::namedWindow("wrapDst", 0);
 	cv::imshow("wrapDst", wrapDst);
+
+	//cv::imwrite("wrapDstGood.jpg", wrapDst);
+
+	/********************************************度量矫正***************************************************/
+	cv::Mat wrapDstShow = wrapDst.clone();
+	std::vector<std::pair<myLine, myLine>> VerticalLine(3);
+	std::vector<std::pair<std::pair<cv::Point, cv::Point>, std::pair<cv::Point, cv::Point>>> VerticalLinePoint(3);
+
+	//取3*2*2个点
+	VerticalLinePoint[0].first.first = cv::Point(282, 245);
+	VerticalLinePoint[0].first.second = cv::Point(282, 279);
+	VerticalLinePoint[0].second.first = cv::Point(277, 244);
+	VerticalLinePoint[0].second.second = cv::Point(261, 267);
+
+	VerticalLinePoint[1].first.first = cv::Point(91, 692);
+	VerticalLinePoint[1].first.second = cv::Point(91, 768);
+	VerticalLinePoint[1].second.first = cv::Point(111, 765);
+	VerticalLinePoint[1].second.second = cv::Point(95, 787);
+
+	VerticalLinePoint[2].first.first = cv::Point(88, 613);
+	VerticalLinePoint[2].first.second = cv::Point(272, 341);
+	VerticalLinePoint[2].second.first = cv::Point(174, 593);
+	VerticalLinePoint[2].second.second = cv::Point(174, 659);
+	for (int i = 0; i < 3; i++)
+	{
+		VerticalLine[i].first = myLine(VerticalLinePoint[i].first.first, VerticalLinePoint[i].first.second);
+		VerticalLine[i].first.printABC();
+		VerticalLine[i].second = myLine(VerticalLinePoint[i].second.first, VerticalLinePoint[i].second.second);
+		VerticalLine[i].second.printABC();
+
+		cv::line(wrapDstShow, VerticalLinePoint[i].first.first, VerticalLinePoint[i].first.second, 255, 2, cv::LINE_AA);
+		cv::line(wrapDstShow, VerticalLinePoint[i].second.first, VerticalLinePoint[i].second.second, 255, 2, cv::LINE_AA);
+	}
+	cv::namedWindow("wrapDstShow", 0);
+	cv::imshow("wrapDstShow", wrapDstShow);
+
+
+
+
 	cv::waitKey(0);
-
-
-
 	return 0;
 }
