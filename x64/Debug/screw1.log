@@ -1,11 +1,15 @@
-﻿  源.cpp
-E:\desktop\computerVision\transform\源.cpp(186,13): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
-E:\desktop\computerVision\transform\源.cpp(188,43): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
+﻿  对角线找消影.cpp
+E:\desktop\computerVision\transform\对角线找消影.cpp(26,13): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+E:\desktop\computerVision\transform\对角线找消影.cpp(27,13): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+E:\desktop\computerVision\transform\对角线找消影.cpp(28,13): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+E:\desktop\computerVision\transform\对角线找消影.cpp(29,13): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+E:\desktop\computerVision\transform\对角线找消影.cpp(239,13): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+E:\desktop\computerVision\transform\对角线找消影.cpp(241,43): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\desktop\computerVision\transform\源.cpp(189,43): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
+E:\desktop\computerVision\transform\对角线找消影.cpp(242,43): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float

@@ -176,53 +176,62 @@ int main()
 	cv::imshow("showMat", showMat);
 	
 	/********************************************仿射变换***************************************************/
-	cv::Mat wrapSrc = gray.clone();
-	cv::Mat wrapDst = cv::Mat::zeros(gray.rows, 2*gray.cols, gray.type());
-
-	cv::Point2f srcTri[3], dstTri[3];
-	srcTri[0] = cv::Point2f(75, 695);
-	srcTri[1] = cv::Point2f(75, 897);
-	srcTri[2] = cv::Point2f(462, 524);
-	int length = sqrt((462 - 75) * (462 - 75) + (524 - 695) * (524 - 695));
-
-	dstTri[0] = cv::Point2f(wrapDst.cols / 2 - (gray.cols / 2 - 75), 695);
-	dstTri[1] = cv::Point2f(wrapDst.cols / 2 - (gray.cols / 2 - 75), 897);
-	dstTri[2] = cv::Point2f(dstTri[0].x+length/2, 695);
-
-	cv::Mat warp_mat(2, 3, CV_32FC1);
-	double temp[3][3] = { 1,0,0,0,1,0,-34, -1690, 1773156 };
-	cv::Mat warp_mat_multiplier(3, 3, CV_64F,temp);
-	warp_mat = cv::getAffineTransform(srcTri, dstTri);
-	warp_mat.convertTo(warp_mat, CV_64F, 1.0);
-	//printMat(warp_mat);
-	//warp_mat = warp_mat * warp_mat_multiplier;
-	//printMat(warp_mat);
-	//cv::invert(warp_mat, warp_mat);
-	//printMat(warp_mat);
-	warp_mat.convertTo(warp_mat, CV_32FC1, 1.0);
-	warp_mat_multiplier.convertTo(warp_mat_multiplier, CV_32FC1, 1.0);
-	//仿射变换
-	warpAffine(wrapSrc, wrapDst, warp_mat_multiplier, wrapDst.size());
-	cv::namedWindow("wrapDst", 0);
-	cv::imshow("wrapDst", wrapDst);
-	/********************************************射影变换***************************************************/
 	//cv::Mat wrapSrc = gray.clone();
 	//cv::Mat wrapDst = cv::Mat::zeros(gray.rows, 2*gray.cols, gray.type());
-	//cv::Point2f srcTri[4], dstTri[4];
+
+	//cv::Point2f srcTri[3], dstTri[3];
 	//srcTri[0] = cv::Point2f(75, 695);
 	//srcTri[1] = cv::Point2f(75, 897);
 	//srcTri[2] = cv::Point2f(462, 524);
-	//srcTri[3] = cv::Point2f(462, 824);
 	//int length = sqrt((462 - 75) * (462 - 75) + (524 - 695) * (524 - 695));
 
 	//dstTri[0] = cv::Point2f(wrapDst.cols / 2 - (gray.cols / 2 - 75), 695);
 	//dstTri[1] = cv::Point2f(wrapDst.cols / 2 - (gray.cols / 2 - 75), 897);
-	//dstTri[2] = cv::Point2f(dstTri[0].x + length, 695);
-	//dstTri[3] = cv::Point2f(dstTri[0].x + length, 897);
-	//cv::Mat warpmatrix = cv::getPerspectiveTransform(srcTri, dstTri);
-	//cv::warpPerspective(wrapSrc, wrapDst, warpmatrix, wrapDst.size(), cv::INTER_LINEAR);//投射变换
-	////cv::namedWindow("wrapDst", 0);
+	//dstTri[2] = cv::Point2f(dstTri[0].x+length/2, 695);
+
+	//cv::Mat warp_mat(2, 3, CV_32FC1);
+	//double temp[3][3] = { 1,0,0,0,1,0,-34, -1690, 1773156 };
+	//cv::Mat warp_mat_multiplier(3, 3, CV_64F,temp);
+	//warp_mat = cv::getAffineTransform(srcTri, dstTri);
+	//warp_mat.convertTo(warp_mat, CV_64F, 1.0);
+	////printMat(warp_mat);
+	////warp_mat = warp_mat * warp_mat_multiplier;
+	////printMat(warp_mat);
+	////cv::invert(warp_mat, warp_mat);
+	////printMat(warp_mat);
+	//warp_mat.convertTo(warp_mat, CV_32FC1, 1.0);
+	//warp_mat_multiplier.convertTo(warp_mat_multiplier, CV_32FC1, 1.0);
+	////仿射变换
+	//warpAffine(wrapSrc, wrapDst, warp_mat_multiplier, wrapDst.size());
+	//cv::namedWindow("wrapDst", 0);
 	//cv::imshow("wrapDst", wrapDst);
+	/********************************************射影变换***************************************************/
+	cv::Mat wrapSrc = gray.clone();
+	cv::Mat wrapDst = cv::Mat::zeros(4*gray.rows, 4*gray.cols, gray.type());
+	cv::Point2f srcTri[4], dstTri[4];
+	srcTri[0] = cv::Point2f(75, 695);
+	srcTri[1] = cv::Point2f(75, 897);
+	srcTri[2] = cv::Point2f(462, 524);
+	srcTri[3] = cv::Point2f(462, 824);
+	int length = sqrt((462 - 75) * (462 - 75) + (524 - 695) * (524 - 695));
+
+	dstTri[0] = cv::Point2f(wrapDst.cols / 2 - (gray.cols / 2 - 75), 695);
+	dstTri[1] = cv::Point2f(wrapDst.cols / 2 - (gray.cols / 2 - 75), 897);
+	dstTri[2] = cv::Point2f(dstTri[0].x + length, 695);
+	dstTri[3] = cv::Point2f(dstTri[0].x + length, 897);
+	cv::Mat warpmatrix = cv::getPerspectiveTransform(srcTri, dstTri);
+	printMat(warpmatrix);
+	double temp[3][3] = { 1,0,0,0,1,0,-34.0/ 1773156, -1690.0/ 1773156, 1 };
+	cv::Mat warp_mat(3, 3, CV_64F,temp);
+	printMat(warp_mat);
+	warp_mat.convertTo(warp_mat, warpmatrix.type(), 1.0);
+	cv::warpPerspective(wrapSrc, wrapDst, warp_mat, wrapDst.size(), cv::INTER_LINEAR);//投射变换
+
+	cv::namedWindow("wrapDst", 0);
+	cv::imshow("wrapDst", wrapDst);
 	cv::waitKey(0);
+
+
+
 	return 0;
 }
