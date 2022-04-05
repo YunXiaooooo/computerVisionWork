@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
@@ -277,10 +278,14 @@ int main()
 	VerticalLinePoint[1].second.first = cv::Point(111, 765);
 	VerticalLinePoint[1].second.second = cv::Point(95, 787);
 
-	VerticalLinePoint[2].first.first = cv::Point(88, 613);
-	VerticalLinePoint[2].first.second = cv::Point(272, 341);
-	VerticalLinePoint[2].second.first = cv::Point(174, 593);
-	VerticalLinePoint[2].second.second = cv::Point(174, 659);
+	//VerticalLinePoint[2].first.first = cv::Point(88, 613);
+	//VerticalLinePoint[2].first.second = cv::Point(272, 341);
+	//VerticalLinePoint[2].second.first = cv::Point(174, 593);
+	//VerticalLinePoint[2].second.second = cv::Point(174, 659);
+	VerticalLinePoint[2].first.first = cv::Point(278, 393);
+	VerticalLinePoint[2].first.second = cv::Point(263, 440);
+	VerticalLinePoint[2].second.first = cv::Point(263, 414);
+	VerticalLinePoint[2].second.second = cv::Point(278, 418);
 	for (int i = 0; i < 3; i++)
 	{
 		VerticalLine[i].first = myLine(VerticalLinePoint[i].first.first, VerticalLinePoint[i].first.second);
@@ -293,6 +298,77 @@ int main()
 	}
 	cv::namedWindow("wrapDstShow", 0);
 	cv::imshow("wrapDstShow", wrapDstShow);
+
+	//展开成行向量
+	std::vector<std::vector<float>> VerticalLineForMatrix(3, std::vector<float>(3));
+	for (int i = 0; i < 3; i++)
+	{
+		VerticalLineForMatrix[i][0] = VerticalLine[i].first.a * VerticalLine[i].second.a;
+		VerticalLineForMatrix[i][1] = VerticalLine[i].first.a * VerticalLine[i].second.b + VerticalLine[i].first.b * VerticalLine[i].second.a;
+		VerticalLineForMatrix[i][2] = VerticalLine[i].first.b * VerticalLine[i].second.b;
+
+		printf("%f  %f   %f \n", VerticalLineForMatrix[i][0], VerticalLineForMatrix[i][1], VerticalLineForMatrix[i][2]);
+	}
+
+	Eigen::Matrix<double, 3, 3> C;
+	C << VerticalLineForMatrix[1][0], VerticalLineForMatrix[1][1], VerticalLineForMatrix[1][2],
+		VerticalLineForMatrix[2][0], VerticalLineForMatrix[2][1], VerticalLineForMatrix[2][2],
+		0, 0, 0;
+	C.eigenvalues();
+	Eigen::EigenSolver<Eigen::Matrix3d> eig(C);
+	std::cout << eig.eigenvectors() << std::endl;
+	auto vec = eig.eigenvectors();
+	std::vector<double> s(3);
+	s[0] = vec(6).real();
+	s[1] = vec(7).real();
+	s[2] = vec(8).real();
+	//for (int i = 0; i < vec.rows(); i++)
+	//{
+	//	std::cout << vec[i];
+	//}
+	//std::cout << std::endl;
+
+	Eigen::Matrix3f S;
+	S << s[0], s[1], 0,
+		 s[1], s[2], 0,
+		 0, 0, 0;
+	Eigen::JacobiSVD<Eigen::MatrixXf> svd(S, Eigen::ComputeThinU | Eigen::ComputeThinV);
+	Eigen::Matrix3f V = svd.matrixV(), U = svd.matrixU();
+	Eigen::Matrix3f  SofSVD = U.inverse() * S * V.transpose().inverse();
+	std::cout << "s of svd:" << SofSVD << std::endl;
+	double Htemp[3][3] = { V(0,0),V(0,1),V(0,2),
+						   V(1,0),V(1,1),V(1,2),
+						   V(2,0),V(2,1),V(2,2)};
+	cv::Mat H(3, 3, CV_64F, Htemp);
+	H.convertTo(H, warpmatrix.type(), 1.0);
+	printMat(H);
+	cv::Mat metricCorrection;
+	cv::warpPerspective(wrapDst, metricCorrection, H, wrapDst.size(), cv::INTER_LINEAR);//投射变换
+	cv::namedWindow("metricCorrection", 0);
+	cv::imshow("metricCorrection", metricCorrection);
+
+	/********************************************仿射变换***************************************************/
+	cv::Mat wrapSrFS = wrapDst.clone();
+	cv::Mat wrapDstFS = cv::Mat::zeros(wrapSrFS.rows, 2* wrapSrFS.cols, wrapSrFS.type());
+
+	cv::Point2f srcTriFS[3], dstTriFS[3];
+	srcTriFS[0] = cv::Point2f(94, 513);
+	srcTriFS[1] = cv::Point2f(93, 784);
+	srcTriFS[2] = cv::Point2f(281, 238);
+	int lengthFS = sqrt((srcTriFS[2].x - srcTriFS[0].x) * (srcTriFS[2].x - srcTriFS[0].x) + (srcTriFS[2].y - srcTriFS[0].y) * (srcTriFS[2].y - srcTriFS[0].y));
+
+	dstTriFS[0] = cv::Point2f(wrapSrFS.cols / 2 - (wrapSrFS.cols / 2 - 75), 513);
+	dstTriFS[1] = cv::Point2f(wrapSrFS.cols / 2 - (wrapSrFS.cols / 2 - 75), 784);
+	dstTriFS[2] = cv::Point2f(dstTri[0].x+ lengthFS /2, 513);
+
+	cv::Mat warp_matFS(2, 3, CV_32FC1);
+	warp_matFS = cv::getAffineTransform(srcTriFS, dstTriFS);
+	printMat(warp_matFS);
+
+	//仿射变换
+	warpAffine(wrapSrFS, wrapDstFS, warp_matFS, wrapDst.size());
+	cv::namedWindow("wrapDstFS", 0);
+	cv::imshow("wrapDstFS", wrapDstFS);
 
 
 
