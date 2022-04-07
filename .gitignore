@@ -33,7 +33,7 @@ x64/Debug/opencv_world3411d.dll
 *.exe
 *.out
 *.app
-
+*.pdb
 
 #忽略所有图片，大部分是运行时需要查看保存的图片
 #*.bmp

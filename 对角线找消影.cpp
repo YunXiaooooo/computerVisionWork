@@ -159,7 +159,7 @@ int main()
 	//cv::imwrite("cannyGray.jpg", cannyGray);
 	//cv::waitKey(0);
 	/*********************************************计算消影点和消影线***************************************************/
-	//地面两条直线的取点
+	//两条直线的取点
 	const cv::Point wallLineOneRight = cv::Point(463, 291);
 	const cv::Point wallLineOneLeft = cv::Point(97, 526);
 	const cv::Point wallLineTwoRight = cv::Point(461, 552);
@@ -179,6 +179,7 @@ int main()
 	cv::line(showMat, cv::Point(showMat.cols - 1, wallLineTwo.getY(showMat.cols - 1)), cv::Point(0, wallLineTwo.getY(0)), 255, 4, cv::LINE_AA);
 	cv::namedWindow("showMat", 0);
 	cv::imshow("showMat", showMat);
+	cv::imwrite("showMat0.jpg", showMat);
 	//cv::waitKey(0);
 
 	//墙面两条直线的取点
@@ -196,13 +197,14 @@ int main()
 	cv::line(showMat, cv::Point(showMat.cols - 1, wallDiagonalLineOne.getY(showMat.cols - 1)), cv::Point(0, wallDiagonalLineOne.getY(0)), 255, 4, cv::LINE_AA);
 	cv::line(showMat, cv::Point(showMat.cols - 1, wallDiagonalLineTwo.getY(showMat.cols - 1)), cv::Point(0, wallDiagonalLineTwo.getY(0)), 255, 4, cv::LINE_AA);
 	cv::imshow("showMat", showMat);
-	
+	cv::imwrite("showMat1.jpg", showMat);
 	//由两点确定消影线
 	myLine fadingLine(crossPointAboutGrand, crossPointAboutWall);
 	fadingLine.printABC();
 	//画出消影线
 	cv::line(showMat, crossPointAboutGrand, crossPointAboutWall, 255, 4, cv::LINE_AA);
 	cv::imshow("showMat", showMat);
+	cv::imwrite("showMat2.jpg", showMat);
 	//cv::waitKey(0);
 	/********************************************仿射变换***************************************************/
 	//cv::Mat wrapSrc = gray.clone();
@@ -259,7 +261,7 @@ int main()
 
 	cv::namedWindow("wrapDst", 0);
 	cv::imshow("wrapDst", wrapDst);
-
+	cv::imwrite("wrapDst.jpg", wrapDst);
 	//cv::imwrite("wrapDstGood.jpg", wrapDst);
 
 	/********************************************度量矫正***************************************************/
@@ -286,7 +288,7 @@ int main()
 	VerticalLinePoint[2].first.second = cv::Point(263, 440);
 	VerticalLinePoint[2].second.first = cv::Point(263, 414);
 	VerticalLinePoint[2].second.second = cv::Point(278, 418);
-	for (int i = 0; i < 3; i++)
+	for (int i = 1; i < 3; i++)
 	{
 		VerticalLine[i].first = myLine(VerticalLinePoint[i].first.first, VerticalLinePoint[i].first.second);
 		VerticalLine[i].first.printABC();
@@ -298,7 +300,7 @@ int main()
 	}
 	cv::namedWindow("wrapDstShow", 0);
 	cv::imshow("wrapDstShow", wrapDstShow);
-
+	cv::imwrite("wrapDstShow.jpg", wrapDstShow);
 	//展开成行向量
 	std::vector<std::vector<float>> VerticalLineForMatrix(3, std::vector<float>(3));
 	for (int i = 0; i < 3; i++)
@@ -332,43 +334,47 @@ int main()
 	S << s[0], s[1], 0,
 		 s[1], s[2], 0,
 		 0, 0, 0;
+	std::cout << "S:" << S << std::endl;
 	Eigen::JacobiSVD<Eigen::MatrixXf> svd(S, Eigen::ComputeThinU | Eigen::ComputeThinV);
 	Eigen::Matrix3f V = svd.matrixV(), U = svd.matrixU();
 	Eigen::Matrix3f  SofSVD = U.inverse() * S * V.transpose().inverse();
 	std::cout << "s of svd:" << SofSVD << std::endl;
-	double Htemp[3][3] = { V(0,0),V(0,1),V(0,2),
-						   V(1,0),V(1,1),V(1,2),
-						   V(2,0),V(2,1),V(2,2)};
+	//double Htemp[3][3] = { V(0,0),V(0,1),V(0,2),
+	//					   V(1,0),V(1,1),V(1,2),
+	//					   V(2,0),V(2,1),V(2,2)};
+	double Htemp[3][3] = { 2.2518,0,0,
+						   1.8224,1.3254,0,
+						  0,0,1};
 	cv::Mat H(3, 3, CV_64F, Htemp);
 	H.convertTo(H, warpmatrix.type(), 1.0);
 	printMat(H);
-	cv::Mat metricCorrection;
-	cv::warpPerspective(wrapDst, metricCorrection, H, wrapDst.size(), cv::INTER_LINEAR);//投射变换
+	cv::Mat metricCorrection = cv::Mat::zeros(2*wrapDst.rows, 2*wrapDst.cols, wrapDst.type());
+	cv::warpPerspective(wrapDst, metricCorrection, H, metricCorrection.size(), cv::INTER_LINEAR);//投射变换
 	cv::namedWindow("metricCorrection", 0);
 	cv::imshow("metricCorrection", metricCorrection);
-
+	cv::imwrite("metricCorrection.jpg", metricCorrection);
 	/********************************************仿射变换***************************************************/
-	cv::Mat wrapSrFS = wrapDst.clone();
-	cv::Mat wrapDstFS = cv::Mat::zeros(wrapSrFS.rows, 2* wrapSrFS.cols, wrapSrFS.type());
+	//cv::Mat wrapSrFS = wrapDst.clone();
+	//cv::Mat wrapDstFS = cv::Mat::zeros(wrapSrFS.rows, 2* wrapSrFS.cols, wrapSrFS.type());
 
-	cv::Point2f srcTriFS[3], dstTriFS[3];
-	srcTriFS[0] = cv::Point2f(94, 513);
-	srcTriFS[1] = cv::Point2f(93, 784);
-	srcTriFS[2] = cv::Point2f(281, 238);
-	int lengthFS = sqrt((srcTriFS[2].x - srcTriFS[0].x) * (srcTriFS[2].x - srcTriFS[0].x) + (srcTriFS[2].y - srcTriFS[0].y) * (srcTriFS[2].y - srcTriFS[0].y));
+	//cv::Point2f srcTriFS[3], dstTriFS[3];
+	//srcTriFS[0] = cv::Point2f(94, 513);
+	//srcTriFS[1] = cv::Point2f(93, 784);
+	//srcTriFS[2] = cv::Point2f(281, 238);
+	//int lengthFS = sqrt((srcTriFS[2].x - srcTriFS[0].x) * (srcTriFS[2].x - srcTriFS[0].x) + (srcTriFS[2].y - srcTriFS[0].y) * (srcTriFS[2].y - srcTriFS[0].y));
 
-	dstTriFS[0] = cv::Point2f(wrapSrFS.cols / 2 - (wrapSrFS.cols / 2 - 75), 513);
-	dstTriFS[1] = cv::Point2f(wrapSrFS.cols / 2 - (wrapSrFS.cols / 2 - 75), 784);
-	dstTriFS[2] = cv::Point2f(dstTri[0].x+ lengthFS /2, 513);
+	//dstTriFS[0] = cv::Point2f(wrapSrFS.cols / 2 - (wrapSrFS.cols / 2 - 75), 513);
+	//dstTriFS[1] = cv::Point2f(wrapSrFS.cols / 2 - (wrapSrFS.cols / 2 - 75), 784);
+	//dstTriFS[2] = cv::Point2f(dstTri[0].x+ lengthFS /2, 513);
 
-	cv::Mat warp_matFS(2, 3, CV_32FC1);
-	warp_matFS = cv::getAffineTransform(srcTriFS, dstTriFS);
-	printMat(warp_matFS);
+	//cv::Mat warp_matFS(2, 3, CV_32FC1);
+	//warp_matFS = cv::getAffineTransform(srcTriFS, dstTriFS);
+	//printMat(warp_matFS);
 
-	//仿射变换
-	warpAffine(wrapSrFS, wrapDstFS, warp_matFS, wrapDst.size());
-	cv::namedWindow("wrapDstFS", 0);
-	cv::imshow("wrapDstFS", wrapDstFS);
+	////仿射变换
+	//warpAffine(wrapSrFS, wrapDstFS, warp_matFS, wrapDst.size());
+	//cv::namedWindow("wrapDstFS", 0);
+	//cv::imshow("wrapDstFS", wrapDstFS);
 
 
 
